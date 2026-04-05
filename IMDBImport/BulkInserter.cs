@@ -9,6 +9,9 @@ namespace IMDBImport
 {
     public class BulkInserter : IInserter
     {
+        
+        private const int BULK_TIMEOUT_SECONDS = 0;
+
         public void InsertGenres(List<Genre_Model> genres, SqlConnection sqlConn)
         {
             DataTable genreTable = new DataTable();
@@ -26,6 +29,8 @@ namespace IMDBImport
             using (SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlConn))
             {
                 bulkCopy.DestinationTableName = "Title_Genres";
+                bulkCopy.BatchSize = 10000;
+                bulkCopy.BulkCopyTimeout = BULK_TIMEOUT_SECONDS;
                 bulkCopy.WriteToServer(genreTable);
             }
         }
@@ -59,6 +64,8 @@ namespace IMDBImport
             using (SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlConn))
             {
                 bulkCopy.DestinationTableName = "Title";
+                bulkCopy.BatchSize = 10000;
+                bulkCopy.BulkCopyTimeout = BULK_TIMEOUT_SECONDS;
                 bulkCopy.WriteToServer(titleTable);
             }
         }
@@ -80,6 +87,8 @@ namespace IMDBImport
             using (SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlConn))
             {
                 bulkCopy.DestinationTableName = "CrewDirectors";
+                bulkCopy.BatchSize = 10000;
+                bulkCopy.BulkCopyTimeout = BULK_TIMEOUT_SECONDS;
                 bulkCopy.WriteToServer(crewDirectorsTable);
             }
         }
@@ -101,6 +110,8 @@ namespace IMDBImport
             using (SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlConn))
             {
                 bulkCopy.DestinationTableName = "CrewWriters";
+                bulkCopy.BatchSize = 10000;
+                bulkCopy.BulkCopyTimeout = BULK_TIMEOUT_SECONDS;
                 bulkCopy.WriteToServer(crewWritersTable);
             }
         }
@@ -126,6 +137,8 @@ namespace IMDBImport
             using (SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlConn))
             {
                 bulkCopy.DestinationTableName = "Names";
+                bulkCopy.BatchSize = 10000;
+                bulkCopy.BulkCopyTimeout = BULK_TIMEOUT_SECONDS;
                 bulkCopy.WriteToServer(namesTable);
             }
         }
@@ -147,6 +160,8 @@ namespace IMDBImport
             using (SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlConn))
             {
                 bulkCopy.DestinationTableName = "Name_Titles";
+                bulkCopy.BatchSize = 10000;
+                bulkCopy.BulkCopyTimeout = BULK_TIMEOUT_SECONDS;
                 bulkCopy.WriteToServer(nameTitlesTable);
             }
         }
@@ -168,6 +183,8 @@ namespace IMDBImport
             using (SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlConn))
             {
                 bulkCopy.DestinationTableName = "Name_Professions";
+                bulkCopy.BatchSize = 10000;
+                bulkCopy.BulkCopyTimeout = BULK_TIMEOUT_SECONDS;
                 bulkCopy.WriteToServer(nameProfessionsTable);
             }
         }

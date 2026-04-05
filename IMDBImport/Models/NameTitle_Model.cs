@@ -1,25 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace IMDBImport.Models
+﻿namespace IMDBImport.Models
 {
     public class NameTitle_Model
     {
-        public int NConst { get; set; }
-        public int TConst { get; set; }
+        public string TConst { get; set; }
+        public string NConst { get; set; }
+        public string Category { get; set; }
 
-        public NameTitle_Model(string[] nameTitleInfo)
+      
+        public NameTitle_Model(string[] parts)
         {
-            NConst = int.Parse(nameTitleInfo[0].Substring(2));
-            TConst = int.Parse(nameTitleInfo[1].Substring(2));
+            if (parts.Length < 4)
+                throw new ArgumentException("Format invalide pour NameTitle");
+
+            TConst = parts[0]?.Trim() ?? throw new ArgumentException("TConst ne peut pas être vide");
+            NConst = parts[2]?.Trim() ?? throw new ArgumentException("NConst ne peut pas être vide");
+            Category = parts[3]?.Trim() ?? throw new ArgumentException("Category ne peut pas être vide");
         }
 
-        public override string ToString()
+       
+        public NameTitle_Model()
         {
-            return NConst + " - " + TConst;
         }
     }
 }
