@@ -12,24 +12,23 @@ try
     Console.OutputEncoding = Encoding.UTF8;
     Console.WriteLine("IMDB Import\n");
 
-    const int BATCH_SIZE = 1000000;
-
-    Console.WriteLine($"Batch Size: {BATCH_SIZE:N0} lines");
+    const int BATCH_SIZE = 100000;
+    const int LIMIT = 100000;  
 
     Stopwatch totalTimer = Stopwatch.StartNew();
     IInserter bulkInserter = new BulkInserter();
 
     Console.WriteLine("LOADING AND INSERTING: title.basics.tsv...");
-    LoadAndInsertTitles(bulkInserter);
+    LoadAndInsertTitles(bulkInserter, LIMIT);
 
     Console.WriteLine("\nLOADING AND INSERTING: name.basics.tsv...");
-    LoadAndInsertNames(bulkInserter);
+    LoadAndInsertNames(bulkInserter, LIMIT);
 
     Console.WriteLine("\nLOADING AND INSERTING: title.crew.tsv...");
-    LoadAndInsertCrew(bulkInserter);
+    LoadAndInsertCrew(bulkInserter, LIMIT);
 
     totalTimer.Stop();
-    Console.WriteLine($"\nCompleted in {totalTimer.Elapsed.TotalMinutes:F1} minutes");
+    Console.WriteLine($"\n✓ Completed in {totalTimer.Elapsed.TotalMinutes:F1} minutes");
 
     Console.WriteLine("\nVALIDATING IMPORT...\n");
     using (SqlConnection sqlConn = new SqlConnection(
@@ -57,15 +56,16 @@ catch (Exception ex)
 Console.WriteLine("\nPress any key to exit...");
 Console.ReadKey();
 
-static void LoadAndInsertTitles(IInserter bulkInserter)
+static void LoadAndInsertTitles(IInserter bulkInserter, int limit)
 {
     string filePath = "C:\\IMDB_temp\\title.basics.tsv";
     if (!File.Exists(filePath)) { Console.WriteLine("File not found!"); return; }
 
-    List<Title_Model> titles = new List<Title_Model>(1000000);
-    List<Genre_Model> genres = new List<Genre_Model>(3000000);
+    List<Title_Model> titles = new List<Title_Model>(100000);
+    List<Genre_Model> genres = new List<Genre_Model>(300000);
     int batchCount = 0;
     int skipped = 0;
+    int totalImported = 0;  
 
     using (SqlConnection sqlConn = new SqlConnection(
         "Server=localhost;Database=IMDB26;Integrated Security=true;TrustServerCertificate=True;"))
@@ -73,29 +73,24 @@ static void LoadAndInsertTitles(IInserter bulkInserter)
         sqlConn.Open();
 
         StreamReader reader = new StreamReader(filePath, Encoding.UTF8);
-        reader.ReadLine(); 
+        reader.ReadLine();
 
         string line;
         while ((line = reader.ReadLine()) != null)
         {
+            
+            if (totalImported >= limit)
+                break;
+
             try
             {
                 string[] parts = line.Split('\t');
                 if (parts.Length == 9)
                 {
-
-                    bool isComplete =
-                        parts[0] != "\\N" &&  
-                        parts[1] != "\\N" &&  
-                        parts[2] != "\\N" &&  
-                        parts[3] != "\\N" &&  
-                        parts[4] != "\\N" &&  
-                        parts[5] != "\\N" &&  
-                        parts[7] != "\\N";    
-
-                    if (isComplete)
+                    if (parts[1] != "\\N")
                     {
                         titles.Add(new Title_Model(parts));
+                        totalImported++;  
 
                         if (parts[8] != "\\N")
                         {
@@ -111,7 +106,7 @@ static void LoadAndInsertTitles(IInserter bulkInserter)
             }
             catch { }
 
-            if (titles.Count >= 1000000)
+            if (titles.Count >= 100000)
             {
                 bulkInserter.InsertTitles(titles, sqlConn);
                 bulkInserter.InsertGenres(genres, sqlConn);
@@ -133,18 +128,19 @@ static void LoadAndInsertTitles(IInserter bulkInserter)
         sqlConn.Close();
     }
 
-    Console.WriteLine($" ({batchCount} batches, {skipped:N0} records skipped)");
+    Console.WriteLine($" ({batchCount} batches, {totalImported:N0} records imported, {skipped:N0} skipped)");
 }
 
-static void LoadAndInsertNames(IInserter bulkInserter)
+static void LoadAndInsertNames(IInserter bulkInserter, int limit)
 {
     string filePath = "C:\\IMDB_temp\\name.basics.tsv";
     if (!File.Exists(filePath)) { Console.WriteLine("File not found!"); return; }
 
-    List<Name_Model> names = new List<Name_Model>(1000000);
-    List<NameProfession_Model> profs = new List<NameProfession_Model>(2000000);
+    List<Name_Model> names = new List<Name_Model>(100000);
+    List<NameProfession_Model> profs = new List<NameProfession_Model>(200000);
     int batchCount = 0;
     int skipped = 0;
+    int totalImported = 0;  
 
     using (SqlConnection sqlConn = new SqlConnection(
         "Server=localhost;Database=IMDB26;Integrated Security=true;TrustServerCertificate=True;"))
@@ -152,32 +148,27 @@ static void LoadAndInsertNames(IInserter bulkInserter)
         sqlConn.Open();
 
         StreamReader reader = new StreamReader(filePath, Encoding.UTF8);
-        reader.ReadLine(); 
+        reader.ReadLine();
 
         string line;
         while ((line = reader.ReadLine()) != null)
         {
+            
+            if (totalImported >= limit)
+                break;
+
             try
             {
                 string[] parts = line.Split('\t');
                 if (parts.Length >= 4)
                 {
-
-                    bool isComplete =
-                        parts[0] != "\\N" &&  
-                        parts[1] != "\\N" &&  
-                        parts[2] != "\\N";    
-
-                    if (isComplete)
+                    if (parts.Length > 4 && parts[4] != "\\N")
                     {
                         names.Add(new Name_Model(parts));
+                        totalImported++;  
 
-                        // Professions - OK si NULL
-                        if (parts.Length > 4 && parts[4] != "\\N")
-                        {
-                            foreach (string p in parts[4].Split(','))
-                                profs.Add(new NameProfession_Model(new[] { parts[0], p }));
-                        }
+                        foreach (string p in parts[4].Split(','))
+                            profs.Add(new NameProfession_Model(new[] { parts[0], p }));
                     }
                     else
                     {
@@ -187,7 +178,7 @@ static void LoadAndInsertNames(IInserter bulkInserter)
             }
             catch { }
 
-            if (names.Count >= 1000000)
+            if (names.Count >= 100000)
             {
                 bulkInserter.InsertNames(names, sqlConn);
                 bulkInserter.InsertNameProfessions(profs, sqlConn);
@@ -209,18 +200,19 @@ static void LoadAndInsertNames(IInserter bulkInserter)
         sqlConn.Close();
     }
 
-    Console.WriteLine($" ({batchCount} batches, {skipped:N0} records skipped)");
+    Console.WriteLine($" ({batchCount} batches, {totalImported:N0} records imported, {skipped:N0} skipped)");
 }
 
-static void LoadAndInsertCrew(IInserter bulkInserter)
+static void LoadAndInsertCrew(IInserter bulkInserter, int limit)
 {
     string filePath = "C:\\IMDB_temp\\title.crew.tsv";
     if (!File.Exists(filePath)) { Console.WriteLine("File not found!"); return; }
 
-    List<CrewDirector_Model> dirs = new List<CrewDirector_Model>(2000000);
-    List<CrewWriter_Model> writ = new List<CrewWriter_Model>(2000000);
+    List<CrewDirector_Model> dirs = new List<CrewDirector_Model>(100000);
+    List<CrewWriter_Model> writ = new List<CrewWriter_Model>(100000);
     int batchCount = 0;
     int skipped = 0;
+    int totalImported = 0;  
 
     using (SqlConnection sqlConn = new SqlConnection(
         "Server=localhost;Database=IMDB26;Integrated Security=true;TrustServerCertificate=True;"))
@@ -228,36 +220,35 @@ static void LoadAndInsertCrew(IInserter bulkInserter)
         sqlConn.Open();
 
         StreamReader reader = new StreamReader(filePath, Encoding.UTF8);
-        reader.ReadLine(); 
+        reader.ReadLine();
 
         string line;
         while ((line = reader.ReadLine()) != null)
         {
+            
+            if (totalImported >= limit)
+                break;
+
             try
             {
                 string[] parts = line.Split('\t');
                 if (parts.Length >= 3)
                 {
-
-                    bool isComplete =
-                        parts[0] != "\\N" &&                              
-                        (parts[1] != "\\N" || parts[2] != "\\N");        
-
-                    if (isComplete)
+                    if (parts[0] != "\\N")
                     {
-                        
                         if (parts[1] != "\\N")
                         {
                             foreach (string d in parts[1].Split(','))
                                 dirs.Add(new CrewDirector_Model(new[] { parts[0], d }));
                         }
 
-                        
                         if (parts[2] != "\\N")
                         {
                             foreach (string w in parts[2].Split(','))
                                 writ.Add(new CrewWriter_Model(new[] { parts[0], w }));
                         }
+
+                        totalImported++;  
                     }
                     else
                     {
@@ -267,7 +258,7 @@ static void LoadAndInsertCrew(IInserter bulkInserter)
             }
             catch { }
 
-            if (dirs.Count >= 1000000 || writ.Count >= 1000000)
+            if (dirs.Count >= 100000 || writ.Count >= 100000)
             {
                 bulkInserter.InsertCrewDirectors(dirs, sqlConn);
                 bulkInserter.InsertCrewWriters(writ, sqlConn);
@@ -289,7 +280,7 @@ static void LoadAndInsertCrew(IInserter bulkInserter)
         sqlConn.Close();
     }
 
-    Console.WriteLine($" ({batchCount} batches, {skipped:N0} records skipped)");
+    Console.WriteLine($" ({batchCount} batches, {totalImported:N0} records imported, {skipped:N0} skipped)");
 }
 
 static int ExecuteCountQuery(SqlConnection connection, string query)
