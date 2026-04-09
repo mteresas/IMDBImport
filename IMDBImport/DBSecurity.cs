@@ -7,7 +7,7 @@ public class DBSecurity
     private string connectionString =
         "Server=localhost;Database=IMDB26;Integrated Security=true;TrustServerCertificate=True;";
 
-    // 🔄 Convert imdbID → int
+
     private int ConvertImdbToInt(string imdbId)
     {
         if (string.IsNullOrWhiteSpace(imdbId))
@@ -19,7 +19,7 @@ public class DBSecurity
         return int.Parse(imdbId);
     }
 
-    // 🔍 SEARCH MOVIES
+
     public void SearchMovies(string title, bool showId = false)
     {
         using SqlConnection conn = new SqlConnection(connectionString);
@@ -39,7 +39,6 @@ public class DBSecurity
         }
     }
 
-    // 🔍 SEARCH PERSONS
     public void SearchPersons(string name, bool showId = false)
     {
         using SqlConnection conn = new SqlConnection(connectionString);
@@ -59,7 +58,7 @@ public class DBSecurity
         }
     }
 
-    // ➕ ADD MOVIE
+  
     public void AddMovie(string title, int year)
     {
         using SqlConnection conn = new SqlConnection(connectionString);
@@ -79,7 +78,6 @@ public class DBSecurity
         }
     }
 
-    // ✏️ UPDATE MOVIE
     public void UpdateMovie(string imdbId, string title, int year)
     {
         int id = ConvertImdbToInt(imdbId);
@@ -99,7 +97,7 @@ public class DBSecurity
         Console.WriteLine("Movie updated!");
     }
 
-    // ➕ ADD PERSON
+   
     public void AddPerson(string name, int year)
     {
         using (SqlConnection conn = new SqlConnection(connectionString))
@@ -110,7 +108,7 @@ public class DBSecurity
             {
                 cmd.CommandType = CommandType.StoredProcedure;
 
-                // 🔥 IMPORTANT
+               
                 cmd.Parameters.AddWithValue("@PrimaryName", name);
                 cmd.Parameters.AddWithValue("@BirthYear", year);
 
@@ -119,7 +117,7 @@ public class DBSecurity
         }
     }
 
-    // ❌ DELETE MOVIE
+   
     public void DeleteMovie(string imdbId)
     {
         int id = ConvertImdbToInt(imdbId);
