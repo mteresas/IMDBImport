@@ -8,7 +8,7 @@ public class DBSecurity
         "Server=localhost;Database=IMDB26;Integrated Security=true;TrustServerCertificate=True;";
 
 
-    private int ConvertImdbToInt(string imdbId)
+    /*private int ConvertImdbToInt(string imdbId)
     {
         if (string.IsNullOrWhiteSpace(imdbId))
             throw new Exception("Invalid ID");
@@ -17,7 +17,7 @@ public class DBSecurity
             return int.Parse(imdbId.Substring(2));
 
         return int.Parse(imdbId);
-    }
+    }*/
 
 
     public void SearchMovies(string title, bool showId = false)
@@ -33,7 +33,7 @@ public class DBSecurity
         while (reader.Read())
         {
             if (showId)
-                Console.WriteLine($"ID: {reader["imdbID"]} - {reader["PrimaryTitle"]} ({reader["StartYear"]})");
+                Console.WriteLine($"ID: {reader["TConst"]} - {reader["PrimaryTitle"]} ({reader["StartYear"]})");
             else
                 Console.WriteLine($"{reader["PrimaryTitle"]} ({reader["StartYear"]})");
         }
@@ -74,7 +74,7 @@ public class DBSecurity
         if (reader.Read())
         {
             int id = Convert.ToInt32(reader["NewMovieID"]);
-            Console.WriteLine($"Movie added with ID: tt{id:D7}");
+            Console.WriteLine($"Movie added with ID: {id:D7}");
         }
     }
 
